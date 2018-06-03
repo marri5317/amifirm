@@ -50,6 +50,7 @@ import java.util.zip.GZIPInputStream;
 public class AmiFirm {	
 	private final Map<Short, ByteBuffer> fileBuffer;
 	private	final Map<Short, String> fileNames;
+	private final Map<Short, Boolean> fileIsExecutableMap;
 	private final Map<Short, String> directoryNames;
 	
 	/**
@@ -58,6 +59,7 @@ public class AmiFirm {
 	public AmiFirm() {
 		this.fileBuffer = new TreeMap<>();
 		this.fileNames = new TreeMap<>();
+		this.fileIsExecutableMap = new TreeMap<>();
 		this.directoryNames = new TreeMap<>();
 	}
         
@@ -81,6 +83,7 @@ public class AmiFirm {
 				int fileType;
 				short parentId;
 				int fileSize;
+				short fileIsExecutable;
 
 				switch(type) {
 					case 0x00:
@@ -89,7 +92,7 @@ public class AmiFirm {
 						parentId = in.readShort();				// parentid 004A
 						in.skip(2);								// Skip 0000
 						fileType = in.read();					// fileType 81
-						in.skip(1);								// Skip A4
+						fileIsExecutable = (short) in.read();	// fileIsExecutable 0xA4: false 0xED: true
 						in.skip(2);								// Skip 0000
 						in.skip(4);								// Skip 0000 000D // size?
 						in.skip(2);								// Skip F5CA // checksum?
@@ -124,6 +127,17 @@ public class AmiFirm {
 							case 0x81:
 								fileNames.put(fileId, name);
 								break;	
+						}
+
+						switch(fileIsExecutable) {
+							case 0xED:
+								fileIsExecutableMap.put(fileId, true);
+								break;
+
+							default:
+								fileIsExecutableMap.put(fileId, false);
+								break;
+
 						}
 						break;
 					case 0x04:
@@ -306,11 +320,17 @@ public class AmiFirm {
 					buffer.rewind();
 					
 					// open the output (append is false), write and close
-					try (FileOutputStream out = new FileOutputStream(new File(dir, fileName))) {
+					File file = new File(dir, fileName);
+					try (FileOutputStream out = new FileOutputStream(file)) {
 						if (inflate)
 							writeInflate(out, buffer.array(), 0, buffer.remaining());
 						else
 							out.write(buffer.array(), 0, buffer.remaining());
+					}
+
+					// set file executable bit
+					if(fileIsExecutableMap.get(fileId)) {
+						file.setExecutable(true);
 					}
 				} else {
 					System.err.println(fileName + " not found in firmware");
