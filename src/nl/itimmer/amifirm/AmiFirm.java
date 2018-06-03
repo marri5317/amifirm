@@ -353,7 +353,7 @@ public class AmiFirm {
 	}
 	
 	public static void main(String args[]) {
-		System.out.println("AmiFirm 0.2.0 - Amino Aminet Firmware downloader and extractor");
+		System.out.println("AmiFirm 0.2.1 - Amino Aminet Firmware downloader and extractor");
 
 		int port = 0;
 		InetAddress address = null;
