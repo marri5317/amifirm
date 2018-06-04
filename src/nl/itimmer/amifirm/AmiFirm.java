@@ -330,7 +330,7 @@ public class AmiFirm {
 
 					// set file executable bit
 					if(fileIsExecutableMap.get(fileId)) {
-						file.setExecutable(true);
+						file.setExecutable(true, false);
 					}
 				} else {
 					System.err.println(fileName + " not found in firmware");
